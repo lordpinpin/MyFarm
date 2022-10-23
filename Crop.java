@@ -33,5 +33,8 @@ public class Crop {
         return type;
     }
 
+    public String getName(){
+        return name;
+    }
 
 }
