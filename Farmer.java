@@ -1,7 +1,7 @@
 /**
  * <p>
  * This class represents the farmer who can perform actions in their farm. These various actions include:
- * Plowing, planting, watering, fertilizing, harvesting, registering, shovelling and pickaxing. All of them
+ * Plowing, planting, watering, fertilizing, harvesting, registering, shoveling, and pickaxing. All of them
  * have a set cost and some have a set amount of EXP gain from doing these actions.
  * <p>
  * To pay for these, Farmers have coins that they can spend on certain actions. These actions will usually
@@ -24,13 +24,13 @@ public class Farmer {
     /**
      * Constructor of Farmer.
      */
-    public Farmer(){}
+    public Farmer() {}
 
     /**
      * Gets the total amount of EXP earned.
      * @return the total amount of EXP the player has earned.
      */
-    public double getTotalExp(){
+    public double getTotalExp() {
         return ((level - 1) * 100) + exp;
     }
 
@@ -71,23 +71,21 @@ public class Farmer {
      * if buying Crops.
      * @param amount the amount of coins needed.
      * @param discount whether the seed cost reduction needs to be taken into account.
-     * @return true if the Farmer has enough coins and false if not.
+     * @throws NotEnoughMoneyException if the Farmer does not have enough objectCoins.
      */
-    public boolean coinCheck(int amount, boolean discount){
-        if (discount){
-            return objectCoins - seedCostReduction >= amount;
-        }
-        else {
-            return objectCoins >= amount;
+    public void checkCoins(int amount, boolean discount) throws NotEnoughMoneyException {
+        int availableCoins = discount ? objectCoins - seedCostReduction : objectCoins;
+        if (availableCoins < amount) {
+            throw new NotEnoughMoneyException();
         }
     }
 
     /**
      * Checks if the player has 100 EXP to level up, and updates the level if so.
-     * @return true if the player has enough EXP, and false if not.
+     * @return true if the player has leveled up, false otherwise.
      */
-    public boolean levelCheck(){
-        if(exp >= 100){
+    public boolean levelCheck() {
+        if (exp >= 100) {
             exp -= 100;
             level++;
             return true;
@@ -96,23 +94,21 @@ public class Farmer {
     }
 
     /**
-     * Displays an update that the player has levelled up if activated.
-     * @param update true if the player has levelled and false if not.
+     * Displays an update message if the player has leveled up.
+     * @param leveledUp true if the player has leveled up, false otherwise.
      */
-
-    public void levelUpdate(boolean update){
-        if (update) {
-            System.out.println();
-            System.out.println("  Level up! You are now level " + level + ".");
+    public void levelUpdate(boolean leveledUp) {
+        if (leveledUp) {
+            System.out.println("\n  Level up! You are now level " + level + ".");
         }
     }
 
     /**
-     * Checks if the player has the levels required for each title upgrade.
-     * @return true if the next title can be registered and false if not.
+     * Checks if the player has the required level to register for the next title upgrade.
+     * @return true if the next title can be registered, false otherwise.
      */
-    public boolean registerCheck(){
-        switch(type){
+    public boolean registerCheck() {
+        switch (type) {
             case "Farmer":
                 return level >= 5;
             case "Registered Farmer":
@@ -120,49 +116,94 @@ public class Farmer {
             case "Distinguished Farmer":
                 return level >= 15;
             case "Legendary Farmer":
-                return false;
+                return false; // Max title reached
             default:
-                System.out.println("  Error in registerCheck!");
                 return false;
         }
     }
 
+
     /**
-     * Plows a Plot if it can. The Farmer gains 0.5 EXP it they successfully plow a Plot.
+     * Displays the next available title upgrade the Farmer can register for based on their current title.
+     */
+    public void displayRegister() {
+        switch (type) {
+            case "Farmer" -> {
+                System.out.println("  Upgrade to Registered Farmer:");
+                System.out.println("  - Increases earnings by 1 per produce.");
+                System.out.println("  - Reduces seed cost by 1.");
+            }
+            case "Registered Farmer" -> {
+                System.out.println("  Upgrade to Distinguished Farmer:");
+                System.out.println("  - Increases earnings by 1 per produce.");
+                System.out.println("  - Reduces seed cost by another 1.");
+                System.out.println("  - Increases maximum water bonus by 1.");
+            }
+            case "Distinguished Farmer" -> {
+                System.out.println("  Final upgrade to Legendary Farmer:");
+                System.out.println("  - Increases earnings by 2 per produce.");
+                System.out.println("  - Reduces seed cost by another 1.");
+                System.out.println("  - Increases max water & fertilizer bonuses by 1.");
+            }
+            case "Legendary Farmer" -> {
+                System.out.println("  You have already reached the maximum title.");
+            }
+        }
+    }
+
+
+    /**
+     * Checks if the player has the levels required for each title upgrade.
+     * @throws InvalidInputException if the player cannot register for a new title.
+     */
+    public void checkRegisterEligibility() throws InvalidInputException {
+        switch (type) {
+            case "Farmer":
+                if (level < 5) throw new InvalidInputException();
+                break;
+            case "Registered Farmer":
+                if (level < 10) throw new InvalidInputException();
+                break;
+            case "Distinguished Farmer":
+                if (level < 15) throw new InvalidInputException();
+                break;
+            case "Legendary Farmer":
+                throw new InvalidInputException();
+        }
+    }
+
+    /**
+     * Plows a Plot if it can. The Farmer gains 0.5 EXP if they successfully plow a Plot.
      * @param plot the unplowed Plot that will be plowed.
      * @param day the current day in the Game.
-     * @return the error code received from doing the action.
+     * @throws PlotAlreadyPlowedException if the Plot is already plowed.
      */
-    public int plow(Plot plot, int day){
-        int error = plot.plow(day);
-        if (error == 0) {
-            exp += 0.5;
-        }
-        return error;
+    public void plow(Plot plot, int day) throws PlotAlreadyPlowedException {
+        plot.plow(day);
+        exp += 0.5;
     }
 
     /**
-     * Plants a Crop in a Plot. The Farmer uses a certain amount of objectCoins and gains a certain
+     * Plants a Crop in a Plot. The Farmer uses a certain amount of objectCoins.
      * @param plot the Plot to be planted on.
      * @param crop the Crop to be planted in the Plot.
+     * @throws NotEnoughMoneyException if the Farmer does not have enough coins.
      */
-    public void plant(Plot plot, Crop crop){
+    public void plant(Plot plot, Crop crop) throws NotEnoughMoneyException {
+        checkCoins(crop.getCost(), true);
         plot.setCrop(crop);
         objectCoins -= crop.getCost() - seedCostReduction;
     }
 
     /**
-     * Waters a Plot with a Crop if it can. The Farmer gains 0.5 EXP it they successfully water a Plot.
+     * Waters a Plot with a Crop if it can. The Farmer gains 0.5 EXP if they successfully water a Plot.
      * @param plot the Plot with the Crop that will be watered.
      * @param day the current day in the Game.
-     * @return the error code received from doing the action.
+     * @throws NoCropInPlotException if there is no crop to water.
      */
-    public int water(Plot plot, int day){
-        int error = plot.water(day);
-        if(error == 0) {
-            exp += 0.5;
-        }
-        return error;
+    public void water(Plot plot, int day) throws NoCropInPlotException {
+        plot.water(day);
+        exp += 0.5;
     }
 
     /**
@@ -170,15 +211,14 @@ public class Farmer {
      * EXP if they successfully fertilize a Plot.
      * @param plot the Plot with the Crop that will be fertilized.
      * @param day the current day in the Game.
-     * @return the error code received from doing the action.
+     * @throws NotEnoughMoneyException if the Farmer does not have enough objectCoins.
+     * @throws NoCropInPlotException if there is no crop to fertilize.
      */
-    public int fertilize(Plot plot, int day){
-        int error = plot.fertilize(day);
-        if(error == 0) {
-            objectCoins -= 10;
-            exp += 4;
-        }
-        return error;
+    public void fertilize(Plot plot, int day) throws NotEnoughMoneyException, NoCropInPlotException {
+        checkCoins(10, false);
+        plot.fertilize(day);
+        objectCoins -= 10;
+        exp += 4;
     }
 
     /**
@@ -186,110 +226,32 @@ public class Farmer {
      * certain amount of objectCoins and EXP based on the Crop harvested.
      * @param plot the Plot with the mature Crop that will be harvested.
      * @param day the current day in the Game.
-     * @return the error code received from doing the action.
+     * @throws CropNotMatureException if the crop is not mature yet.
      */
-    public int harvest(Plot plot, int day){
-        int error = plot.harvestCheck(day);
-        if(error == 0) {
-            int profit = plot.getHarvestProfit(waterMaxBonus, fertilizerMaxBonus, bonusEarnings);
-            double expGain = plot.getHarvestExp();
-            objectCoins += profit;
-            exp += expGain;
-            System.out.println("  Amount of objectCoins gained: " + profit);
-            System.out.println("  Amount of EXP gained: " + expGain);
-            System.out.println();
-            plot.resetPlot();
-        }
-        return error;
-    }
-    /**
-     * Displays the next available title upgrade the Farmer can register for based on the Farmer's
-     * current title.
-     */
-    public void displayRegister(){
-        System.out.println("  The next upgrade costs " + getRegisterCost() + " objectCoins.");
-        switch (type) {
-            case "Farmer" -> {
-                System.out.println();
-                System.out.println("  The upgrade to become a Registered Farmer.");
-                System.out.println("  It will increase earnings by 1 per produce and reduce seed cost by 1.");
-            }
-            case "Registered Farmer" -> {
-                System.out.println();
-                System.out.println("  The upgrade to become a Distinguished Farmer.");
-                System.out.println("  It will increase earnings by 1 per produce and reduce seed cost by another 1.");
-                System.out.println("  It will also increase maximum water bonus by 1.");
-            }
-            case "Distinguished Farmer" -> {
-                System.out.println();
-                System.out.println("  The final upgrade to become a Legendary Farmer.");
-                System.out.println("  It will increase earnings by 2 per produce and reduce seed cost by another 1.");
-                System.out.println("  It will also increase maximum water and fertilizer bonus by 1.");
-            }
-        }
-    }
-    /**
-     * Upgrades the Farmer's current title to the next tier if the Farmer has enough objectCoins.
-     * These can increase the Farmer's bonuses for watering/fertilizing, provide a discount in buying crops or
-     * bring additional bonus earnings from each Crop produced.
-     * @return the error code received from doing the action.
-     */
-    public int register(){
-        switch(type){
-            case "Farmer":
-                if(objectCoins >= 200){
-                    objectCoins -= 200;
-                    bonusEarnings = 1;
-                    seedCostReduction = 1;
-                    type = "Registered Farmer";
-                    return 0;
-                }
-                else{
-                    return 1;
-                }
-            case "Registered Farmer":
-                if(objectCoins >= 300){
-                    objectCoins -= 300;
-                    bonusEarnings = 2;
-                    seedCostReduction = 2;
-                    waterMaxBonus = 1;
-                    type = "Distinguished Farmer";
-                    return 0;
-                }
-                else {
-                    return 1;
-                }
-            case "Distinguished Farmer":
-                if(objectCoins >= 400){
-                    objectCoins -= 400;
-                    bonusEarnings = 4;
-                    seedCostReduction = 3;
-                    waterMaxBonus = 2;
-                    fertilizerMaxBonus = 1;
-                    type = "Legendary Farmer";
-                    return 0;
-                }
-                else{
-                    return 1;
-                }
-            default:
-                System.out.println("  Error in register().");
-                break;
-        }
-        return 0;
+    public void harvest(Plot plot, int day) throws CropNotMatureException {
+        plot.harvestCheck(day);
+        int profit = plot.getHarvestProfit(waterMaxBonus, fertilizerMaxBonus, bonusEarnings);
+        double expGain = plot.getHarvestExp();
+        objectCoins += profit;
+        exp += expGain;
+        System.out.println("  Amount of objectCoins gained: " + profit);
+        System.out.println("  Amount of EXP gained: " + expGain);
+        System.out.println();
+        plot.resetPlot();
     }
 
     /**
      * Gets the cost of upgrading to the next title for registering.
-     * The following is list of the costs of the upgrades:
+     * The following is a list of the costs of the upgrades:
      * <ul>
      *     <li>200 for upgrading to Registered Farmer.
      *     <li>300 for upgrading to Distinguished Farmer.
      *     <li>400 for upgrading to Legendary Farmer.
+     * </ul>
      * @return the appropriate cost for the next title upgrade.
      */
-    public int getRegisterCost(){
-        switch(type){
+    public int getRegisterCost() {
+        switch(type) {
             case "Farmer":
                 return 200;
             case "Registered Farmer":
@@ -298,46 +260,65 @@ public class Farmer {
                 return 400;
             case "Legendary Farmer":
                 System.out.println("  You have reached the maximum title available.");
+                return 0;
+            default:
+                return 0;
         }
-        return 0;
+    }
+
+
+    /**
+     * Upgrades the Farmer's current title to the next tier if they have enough objectCoins.
+     * @throws NotEnoughMoneyException if the Farmer does not have enough objectCoins.
+     */
+    public void register() throws NotEnoughMoneyException {
+        checkCoins(getRegisterCost(), false);
+        objectCoins -= getRegisterCost();
+
+        switch (type) {
+            case "Farmer":
+                bonusEarnings = 1;
+                seedCostReduction = 1;
+                type = "Registered Farmer";
+                break;
+            case "Registered Farmer":
+                bonusEarnings = 2;
+                seedCostReduction = 2;
+                waterMaxBonus = 1;
+                type = "Distinguished Farmer";
+                break;
+            case "Distinguished Farmer":
+                bonusEarnings = 4;
+                seedCostReduction = 3;
+                waterMaxBonus = 2;
+                fertilizerMaxBonus = 1;
+                type = "Legendary Farmer";
+                break;
+        }
     }
 
     /**
-     * Shovels a Plot. It will remove anything on the Plot both withered and unwithered Crops and removes
-     * the plowing on the Plot. There are no restrictions to plowing, but it will not result in any change
-     * if done on an empty unplowed Plot or on a Plot with a rock.
-     * It requires 7 objectCoins and will net the Farmer 2 EXP doing so.
-     * @param plot the Plot with the Crop that will be fertilized.
-     * @return the error code received from doing the action.
+     * Shovels a Plot. Requires 7 objectCoins and will net the Farmer 2 EXP.
+     * @param plot the Plot that will be shoveled.
+     * @throws NotEnoughMoneyException if the Farmer does not have enough objectCoins.
      */
-    public int shovel(Plot plot){
-        if (objectCoins > 7) {
-            objectCoins -= 7;
-            exp += 2;
-            plot.resetPlot();
-            return 0;
-        }
-        else {
-            return 1;
-        }
+    public void shovel(Plot plot) throws NotEnoughMoneyException {
+        checkCoins(7, false);
+        objectCoins -= 7;
+        exp += 2;
+        plot.resetPlot();
     }
+
     /**
-     * Pickaxes a rock on a Plot with one. It requires 50 objectCoins and will net the Farmer 15
-     * EXP if they successfully remove a rock from a Plot.
-     * @param plot the Plot with the Crop that will be fertilized.
-     * @return the error code received from doing the action.
+     * Pickaxes a rock on a Plot. Requires 50 objectCoins and will net the Farmer 15 EXP.
+     * @param plot the Plot with a rock to be removed.
+     * @throws NotEnoughMoneyException if the Farmer does not have enough objectCoins.
+     * @throws NoRockInPlotException if the Plot does not have a rock.
      */
-    public int pickaxe(Plot plot){
-        if (objectCoins > 50) {
-            int error = plot.removeRock();
-            if (error == 0) {
-                objectCoins -= 50;
-                exp += 15;
-            }
-            return error;
-        }
-        else {
-            return 1;
-        }
+    public void pickaxe(Plot plot) throws NotEnoughMoneyException, NoRockInPlotException {
+        checkCoins(50, false);
+        plot.removeRock();
+        objectCoins -= 50;
+        exp += 15;
     }
 }
