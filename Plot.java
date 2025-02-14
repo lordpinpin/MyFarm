@@ -1,3 +1,5 @@
+import exceptions.*;
+
 /**
  * <p>
  * This class represents a plot that can have various actions done to it.
@@ -63,23 +65,13 @@ public class Plot {
      * @return the appropriate error code: 6 if the plot is not plowed, 5 if the
      * plot has no crop in it, 11 if the crop is mature, 4 if the crop has withered and 0 if there is no error.
      */
-    public int water(int day){
-        if(!plowed){
-            return 6; // Plot not plowed.
-        }
-        else if(crop == null){
-            return 5; // Plot has no crop.
-        }
-        else if(crop.getHarvestStatus(day)){
-            return 11; // Crop is to be harvested.
-        }
-        else if(witherCheck(day)){
-            return 4; // Withered crop
-        }
-        else{
-            crop.addWater();
-            return 0;
-        }
+    public void water(int day) throws PlotNotPlowedException, PlotUnoccupiedException, PlotAlreadyMaturedException, CropWitheredException {
+        if (!plowed) throw new PlotNotPlowedException();
+        if (crop == null) throw new PlotUnoccupiedException();
+        if (crop.getHarvestStatus(day)) throw new PlotAlreadyMaturedException();
+        if(witherCheck(day)) throw new CropWitheredException();
+
+        crop.addWater();
     }
     /**
      * Adds fertilizer to the plot if and only if the plot is plowed and has a crop that is not mature yet.
@@ -87,23 +79,13 @@ public class Plot {
      * @return the appropriate error code: 6 if the plot is not plowed, 5 if the plot has no crop in it,
      * 11 if the crop is mature, 4 if the crop has withered and 0 if there is no error.
      */
-    public int fertilize(int day){
-        if(!plowed){
-            return 6; // Plot not plowed.
-        }
-        else if(crop == null){
-            return 5; // Plot has no crop.
-        }
-        else if(crop.getHarvestStatus(day)){
-            return 11; // Crop is to be harvested.
-        }
-        else if(witherCheck(day)){
-            return 4; // Withered crop
-        }
-        else{
-            crop.addFertilizer();
-            return 0; // No error
-        }
+    public void fertilize(int day) throws PlotNotPlowedException, PlotUnoccupiedException, PlotAlreadyMaturedException, CropWitheredException {
+        if (!plowed) throw new PlotNotPlowedException();
+        if (crop == null) throw new PlotUnoccupiedException();
+        if (crop.getHarvestStatus(day)) throw new PlotAlreadyMaturedException();
+        if (witherCheck(day)) throw new CropWitheredException();
+
+        crop.addFertilizer();
     }
 
     /**
@@ -112,36 +94,24 @@ public class Plot {
      * @return the appropriate error code: 4 if the plot has withered crop, 10 if the plot has a crop,
      * 12 if the plot has already been plowed without any plant, and 0 if there is no error.
      */
-    public int plow(int day){
-        if(witherCheck(day)){
-            return 4; // Withered crop
-        }
-        else if(crop != null){
-            return 10; // Plot already has crop in it
-        }
-        else if (plowed) {
-            return 12; // Plot is plowed already
-        }
+    public void plow(int day) throws CropWitheredException, PlotAlreadyOccupiedException, PlotAlreadyPlowedException {
+        if (witherCheck(day)) throw new CropWitheredException();
+        if (crop != null) throw new PlotAlreadyOccupiedException();
+        if (plowed) throw new PlotAlreadyPlowedException();
 
-        else{
-            plowed = true;
-            return 0; // No error
-        }
+        plowed = true;
     }
 
     /**
      * Removes a rock on the plot if there is one.
      * @return the appropriate error code: 0 if there is no error and 7 if the plot has no rock.
      */
-    public int removeRock(){
-        if(rock){
+    public void removeRock() throws NoRockException {
+        if (rock) {
             rock = false;
-            return 0; // No error
+        } else {
+            throw new NoRockException();
         }
-        else{
-            return 7; // No rock to pickaxe
-        }
-
     }
 
     /**
@@ -175,23 +145,16 @@ public class Plot {
 
     /**
      * Checks if the plot can be harvested.
+     *
      * @param day the current day in the Game.
      * @return the appropriate error code: 5 if there is no crop, 4 if the crop has withered, 13 if
      * the crop cannot be harvested yet and 0 if there is no error.
      */
-    public int harvestCheck(int day){
-        if (crop == null){
-            return 5; // No crop.
-        }
-        else if(witherCheck(day)){
-            return 4; // Withered crop.
-        }
-        else if(!crop.getHarvestStatus(day)){
-            return 13; // Crop not mature yet.
-        }
-        else {
-            return 0; // No error.
-        }
+    public boolean harvestCheck(int day) throws PlotUnoccupiedException, CropWitheredException, CropNotMaturedException {
+        if (crop == null) throw new PlotUnoccupiedException();
+        if (witherCheck(day)) throw new CropWitheredException();
+        if (!crop.getHarvestStatus(day)) throw new CropNotMaturedException();
+        return true;
     }
 
     /**
@@ -221,24 +184,16 @@ public class Plot {
 
     /**
      * Checks if the plot can be planted on.
+     *
      * @return the appropriate error code: 14 if there is a rock, 10 if the plot already has a crop,
      * 6 if the plot is not plowed and 0 if there is no error.
      */
 
-    public int plantCheck(){
-        if (rock){
-            return 14; // Plot has rock.
-        }
-        else if(crop != null){
-            return 10; // Plot already has crop in it.
-        }
-        else if(!plowed){
-            return 6; // Plot is not plowed.
-        }
-        else{
-            return 0; // No error.
-        }
-
+    public boolean plantCheck() throws PlotHasRockException, PlotAlreadyOccupiedException, PlotNotPlowedException {
+        if (rock) throw new PlotHasRockException();
+        if (crop != null) throw new PlotAlreadyOccupiedException();
+        if (!plowed) throw new PlotNotPlowedException();
+        return true;
     }
 
 

@@ -1,3 +1,5 @@
+import exceptions.*;
+
 /**
  * <p>
  * This class represents the farmer who can perform actions in their farm. These various actions include:
@@ -133,12 +135,9 @@ public class Farmer {
      * @param day the current day in the Game.
      * @return the error code received from doing the action.
      */
-    public int plow(Plot plot, int day){
-        int error = plot.plow(day);
-        if (error == 0) {
-            exp += 0.5;
-        }
-        return error;
+    public void plow(Plot plot, int day) throws CropWitheredException, PlotAlreadyPlowedException, PlotAlreadyOccupiedException {
+        plot.plow(day);
+        exp += 0.5;
     }
 
     /**
@@ -157,12 +156,9 @@ public class Farmer {
      * @param day the current day in the Game.
      * @return the error code received from doing the action.
      */
-    public int water(Plot plot, int day){
-        int error = plot.water(day);
-        if(error == 0) {
-            exp += 0.5;
-        }
-        return error;
+    public void water(Plot plot, int day) throws CropWitheredException, PlotUnoccupiedException, PlotNotPlowedException, PlotAlreadyMaturedException {
+        plot.water(day);
+        exp += 0.5;
     }
 
     /**
@@ -172,13 +168,10 @@ public class Farmer {
      * @param day the current day in the Game.
      * @return the error code received from doing the action.
      */
-    public int fertilize(Plot plot, int day){
-        int error = plot.fertilize(day);
-        if(error == 0) {
-            objectCoins -= 10;
-            exp += 4;
-        }
-        return error;
+    public void fertilize(Plot plot, int day) throws CropWitheredException, PlotUnoccupiedException, PlotNotPlowedException, PlotAlreadyMaturedException {
+        plot.fertilize(day);
+        objectCoins -= 10;
+        exp += 4;
     }
 
     /**
@@ -188,19 +181,21 @@ public class Farmer {
      * @param day the current day in the Game.
      * @return the error code received from doing the action.
      */
-    public int harvest(Plot plot, int day){
-        int error = plot.harvestCheck(day);
-        if(error == 0) {
-            int profit = plot.getHarvestProfit(waterMaxBonus, fertilizerMaxBonus, bonusEarnings);
-            double expGain = plot.getHarvestExp();
-            objectCoins += profit;
-            exp += expGain;
-            System.out.println("  Amount of objectCoins gained: " + profit);
-            System.out.println("  Amount of EXP gained: " + expGain);
-            System.out.println();
-            plot.resetPlot();
+    public void harvest(Plot plot, int day){
+        try {
+            plot.harvestCheck(day);
+        } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException e) {
+            System.err.println("Error: " + e.getMessage());
         }
-        return error;
+
+        int profit = plot.getHarvestProfit(waterMaxBonus, fertilizerMaxBonus, bonusEarnings);
+        double expGain = plot.getHarvestExp();
+        objectCoins += profit;
+        exp += expGain;
+        System.out.println("  Amount of objectCoins gained: " + profit);
+        System.out.println("  Amount of EXP gained: " + expGain);
+        System.out.println();
+        plot.resetPlot();
     }
     /**
      * Displays the next available title upgrade the Farmer can register for based on the Farmer's
@@ -234,7 +229,7 @@ public class Farmer {
      * bring additional bonus earnings from each Crop produced.
      * @return the error code received from doing the action.
      */
-    public int register(){
+    public void register() throws CannotAffordException {
         switch(type){
             case "Farmer":
                 if(objectCoins >= 200){
@@ -242,11 +237,9 @@ public class Farmer {
                     bonusEarnings = 1;
                     seedCostReduction = 1;
                     type = "Registered Farmer";
-                    return 0;
                 }
-                else{
-                    return 1;
-                }
+                else throw new CannotAffordException();
+
             case "Registered Farmer":
                 if(objectCoins >= 300){
                     objectCoins -= 300;
@@ -254,11 +247,9 @@ public class Farmer {
                     seedCostReduction = 2;
                     waterMaxBonus = 1;
                     type = "Distinguished Farmer";
-                    return 0;
                 }
-                else {
-                    return 1;
-                }
+                else throw new CannotAffordException();
+
             case "Distinguished Farmer":
                 if(objectCoins >= 400){
                     objectCoins -= 400;
@@ -267,16 +258,13 @@ public class Farmer {
                     waterMaxBonus = 2;
                     fertilizerMaxBonus = 1;
                     type = "Legendary Farmer";
-                    return 0;
                 }
-                else{
-                    return 1;
-                }
+                else throw new CannotAffordException();
+
             default:
                 System.out.println("  Error in register().");
                 break;
         }
-        return 0;
     }
 
     /**
@@ -310,16 +298,13 @@ public class Farmer {
      * @param plot the Plot with the Crop that will be fertilized.
      * @return the error code received from doing the action.
      */
-    public int shovel(Plot plot){
+    public void shovel(Plot plot) throws CannotAffordException {
         if (objectCoins > 7) {
             objectCoins -= 7;
             exp += 2;
             plot.resetPlot();
-            return 0;
         }
-        else {
-            return 1;
-        }
+        else throw new CannotAffordException();
     }
     /**
      * Pickaxes a rock on a Plot with one. It requires 50 objectCoins and will net the Farmer 15
@@ -327,17 +312,14 @@ public class Farmer {
      * @param plot the Plot with the Crop that will be fertilized.
      * @return the error code received from doing the action.
      */
-    public int pickaxe(Plot plot){
+    public void pickaxe(Plot plot) throws NoRockException, CannotAffordException {
         if (objectCoins > 50) {
-            int error = plot.removeRock();
-            if (error == 0) {
+            plot.removeRock();
                 objectCoins -= 50;
                 exp += 15;
-            }
-            return error;
         }
         else {
-            return 1;
+            throw new CannotAffordException();
         }
     }
 }

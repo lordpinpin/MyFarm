@@ -1,3 +1,7 @@
+import exceptions.CannotAffordException;
+import exceptions.InvalidInputException;
+import exceptions.NoAvailablePlotsException;
+
 import java.util.Scanner;
 
 /**
@@ -17,7 +21,9 @@ public class Driver {
             do {
                 game.displayFarmInfo();
                 game.displayChoiceMenu();
-                game.choiceMenu(scanner);
+                try {
+                    game.choiceMenu(scanner);
+                } catch (NoAvailablePlotsException | CannotAffordException | InvalidInputException ignored) {}
             } while (!game.endCheck());
         } while (game.displayEndInfo(scanner));
 
