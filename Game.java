@@ -1,3 +1,5 @@
+import exceptions.*;
+
 import java.util.ArrayList;
 import java.util.Scanner;
 /**
@@ -21,7 +23,8 @@ public class Game {
     private int day = 1;
     private final Farmer farmer;
     private final Farm farm;
-    private int error;
+    
+    private String error;
 
     /**
      * Constructor for Game.
@@ -29,90 +32,6 @@ public class Game {
     public Game(){
         farm = new Farm();
         farmer = new Farmer();
-    }
-
-    /**
-     * An error message generated based on the error code at given time.
-     * The list of errors are:
-     * <ul>
-     *     <li> 0 - No error
-     *     <li> 1 - Not enough money
-     *     <li> 2 - Invalid input
-     *     <li> 3 - No available plots to do action
-     *     <li> 4 - Withered crop
-     *     <li> 5 - No crop
-     *     <li> 6 - Not plowed
-     *     <li> 7 - No rocks
-     *     <li> 8 - Tree adjacency error
-     *     <li> 9 - Scanner error
-     *     <li> 10 - Plot has crop
-     *     <li> 11 - Plot has matured already
-     *     <li> 12 - Plot has already been plowed
-     *     <li> 13 - Crop not mature yet
-     *     <li> 14 - Plot has rock
-     * </ul>
-     */
-    public void errorMessage(){
-        switch(error){
-            case 0:
-                break;
-            case 1: // Lack of money
-                System.out.println("  Not enough objectCoins.");
-                System.out.println();
-                break;
-            case 2: // Invalid input
-                System.out.println("  Invalid input.");
-                System.out.println();
-                break;
-            case 3: // No valid plots.
-                System.out.println("  No available plots to use action on.");
-                System.out.println();
-                break;
-            case 4: // Withered crop.
-                System.out.println("  Crop has withered..");
-                System.out.println();
-                break;
-            case 5: // No crop.
-                System.out.println("  No crop in plot.");
-                System.out.println();
-                break;
-            case 6: // Not plowed.
-                System.out.println("  Plot is not plowed.");
-                System.out.println();
-                break;
-            case 7: // No rocks.
-                System.out.println("  No rock to pickaxe.");
-                System.out.println();
-                break;
-            case 8: // Tree adjacency.
-                System.out.println("  Trees need all adjacent plots empty.");
-                System.out.println();
-                break;
-            case 9: // Scanner error.
-                System.out.println("  Reenter choice.");
-                System.out.println();
-                break;
-            case 10: // Plot already has crop in it.
-                System.out.println("  Plot already has crop in it.");
-                System.out.println();
-                break;
-            case 11: // Plot has matured already.
-                System.out.println("  Plot cannot be watered or fertilized at harvest date.");
-                System.out.println();
-                break;
-            case 12: // Plot already plowed.
-                System.out.println("  Plot already plowed.");
-                System.out.println();
-                break;
-            case 13: // Not mature crop yet
-                System.out.println("  Crop in plot has not matured yet.");
-                System.out.println();
-                break;
-            case 14: // Plot has rock.
-                System.out.println("  Plot has rock in it.");
-                System.out.println();
-                break;
-        }
     }
 
     /**
@@ -227,7 +146,12 @@ public class Game {
         System.out.println("                        GAME OVER");
         System.out.println("         It was day " + day + " when the game ended.");
         System.out.println("  Press [N] for a new game, or any other character to quit.");
-        char choice = charInput(scanner);
+        char choice = 0;
+        try {
+            choice = charInput(scanner);
+        } catch (ScannerException e) {
+            error = e.getMessage();
+        }
         return choice == 'N';
     }
 
@@ -236,17 +160,22 @@ public class Game {
      * Appropriate error messages will be displayed when an action cannot be performed.
      * @param scanner the Scanner object used to detect input from the player.
      */
-    public void choiceMenu(Scanner scanner) {
+    public void choiceMenu(Scanner scanner) throws NoAvailablePlotsException, CannotAffordException, InvalidInputException {
 
         ArrayList<Integer> xy = new ArrayList<>(2);
 
         System.out.println();
-        errorMessage();
-        error = 0;
+        printError();
+        error = "";
 
         System.out.println("  Choose an action.");
 
-        char choice = charInput(scanner);
+        char choice = 0;
+        try {
+            choice = charInput(scanner);
+        } catch (ScannerException e) {
+            error = e.getMessage();
+        }
         System.out.println();
 
         switch (choice) {
@@ -254,31 +183,46 @@ public class Game {
                 if (!farm.plowedFarmCheck()) {
                     System.out.println("  Which plot to plow?");
                     plotInput(scanner, xy);
-                    error = farmer.plow(farm.getPlot(xy.get(0),xy.get(1)), day);
+                    try {
+                        farmer.plow(farm.getPlot(xy.get(0),xy.get(1)), day);
+                    } catch (CropWitheredException | PlotAlreadyPlowedException | PlotAlreadyOccupiedException e) {
+                        error = e.getMessage();
+                    }
                 } else {
-                    error = 3;
+                    throw new NoAvailablePlotsException();
                 }
                 break;
             case 'T': // PLANT action
                 if (farm.plantFarmCheck()) {
                     System.out.println("  Which plot to plant in?");
                     plotInput(scanner, xy);
-                    error = farm.getPlot(xy.get(0),xy.get(1)).plantCheck();
-                    if (error == 0) {
+                    try {
+                        farm.getPlot(xy.get(0),xy.get(1)).plantCheck();
+                    } catch (PlotHasRockException | PlotAlreadyOccupiedException | PlotNotPlowedException e) {
+                        error = e.getMessage();
+                    }
+                    try {
                         plantInput(scanner, xy.get(0), xy.get(1));
+                    } catch (InvalidInputException | CannotAffordException | TreeAdjacencyException e) {
+                        error = e.getMessage();
                     }
                 } else {
-                    error = 3;
+                    throw new NoAvailablePlotsException();
                 }
                 break;
             case 'W': // WATER action
                 if (farm.cropFarmCheck(day)) {
                     System.out.println("  Which plot to water?");
                     plotInput(scanner, xy);
-                    error = farmer.water(farm.getPlot(xy.get(0),xy.get(1)), day);
+                    try {
+                        farmer.water(farm.getPlot(xy.get(0),xy.get(1)), day);
+                    } catch (CropWitheredException | PlotUnoccupiedException | PlotNotPlowedException |
+                             PlotAlreadyMaturedException e) {
+                        error = e.getMessage();
+                    }
                 }
                 else {
-                    error = 3;
+                    throw new NoAvailablePlotsException();
                 }
                 break;
             case 'F': // FERTILIZE action
@@ -286,28 +230,41 @@ public class Game {
                     System.out.println("  Which plot to fertilize?");
                     plotInput(scanner, xy);
                     if (farmer.coinCheck(10, false)) {
-                        error = farmer.fertilize(farm.getPlot(xy.get(0),xy.get(1)), day);
+                        try {
+                            farmer.fertilize(farm.getPlot(xy.get(0),xy.get(1)), day);
+                        } catch (CropWitheredException | PlotUnoccupiedException | PlotNotPlowedException |
+                                 PlotAlreadyMaturedException e) {
+                            error = e.getMessage();
+                        }
                     } else {
-                        error = 1;
+                        throw new CannotAffordException();
                     }
                 }
                 else {
-                    error = 3;
+                    throw new NoAvailablePlotsException();
                 }
                 break;
             case 'S': // SHOVEL action
                 System.out.println("  Which plot to shovel?");
                 plotInput(scanner, xy);
-                error = farmer.shovel(farm.getPlot(xy.get(0),xy.get(1)));
+                try {
+                    farmer.shovel(farm.getPlot(xy.get(0),xy.get(1)));
+                } catch (CannotAffordException e) {
+                    error = e.getMessage();
+                }
                 break;
             case 'X': // PICKAXE action
                 if (farm.rockFarmCheck()) {
                     if (farmer.coinCheck(50, false)) {
-                        error = 1;
+                        throw new CannotAffordException();
                     } else {
                         System.out.println("  Which plot to use pickaxe on?");
                         plotInput(scanner, xy);
-                        error = farmer.pickaxe(farm.getPlot(xy.get(0),xy.get(1)));
+                        try {
+                            farmer.pickaxe(farm.getPlot(xy.get(0),xy.get(1)));
+                        } catch (NoRockException | CannotAffordException e) {
+                            error = e.getMessage();
+                        }
                     }
                 }
                 break;
@@ -315,9 +272,18 @@ public class Game {
                 if (farmer.registerCheck()) {
                     farmer.displayRegister();
                     System.out.println("  Do you wish to register? Enter [Y] if so, any other character if not.");
-                    char confirm = charInput(scanner);
+                    char confirm = 0;
+                    try {
+                        confirm = charInput(scanner);
+                    } catch (ScannerException e) {
+                        error = e.getMessage();
+                    }
                     if (confirm == 'Y') {
-                        error = farmer.register();
+                        try {
+                            farmer.register();
+                        } catch (CannotAffordException e) {
+                            error = e.getMessage();
+                        }
                     }
                 }
                 break;
@@ -325,22 +291,24 @@ public class Game {
                 if (farm.harvestFarmCheck(day)) {
                     System.out.println("  Which plot to harvest?");
                     plotInput(scanner, xy);
-                    error = farmer.harvest(farm.getPlot(xy.get(0),xy.get(1)), day);
-                    if(error == 0){
-                        enterCheck(scanner);
-                    }
+                    farmer.harvest(farm.getPlot(xy.get(0),xy.get(1)), day);
+                    enterCheck(scanner);
                 }
                 break;
             case 'E': // END DAY action
                 System.out.println("  Do you wish to advance the day? Enter [Y] if so, any other character if not.");
-                char confirm = charInput(scanner);
+                char confirm = 0;
+                try {
+                    confirm = charInput(scanner);
+                } catch (ScannerException e) {
+                    error = e.getMessage();
+                }
                 if (confirm == 'Y') {
                     advanceDay();
                 }
                 break;
             default:
-                error = 2;
-                break;
+                throw new InvalidInputException();
             }
     }
     /**
@@ -349,16 +317,16 @@ public class Game {
      * @param scanner the Scanner object used to detect input from the player.
      * @return the letter that the player inputted.
      */
-    public char charInput(Scanner scanner){
+    public char charInput(Scanner scanner) throws ScannerException {
         char choice;
         do {
-            errorMessage();
-            error = 0;
+            printError();
+            error = "";
             System.out.print("  ");
             choice = scanner.next().charAt(0);
             scanner.nextLine();
             if (choice == '\n') {
-                error = 9;
+                throw new ScannerException();
             }
         }while(!(choice >= 'a' && choice <= 'z') && !(choice >= 'A' && choice <= 'Z'));
         choice = Character.toUpperCase(choice);
@@ -407,7 +375,7 @@ public class Game {
      * @param x the row where the Plot to be planted is contained
      * @param y the column where the Plot to be planted is contained.
      */
-    public void plantInput(Scanner scanner, int x, int y){
+    public void plantInput(Scanner scanner, int x, int y) throws InvalidInputException, CannotAffordException, TreeAdjacencyException {
         char choice;
 
         System.out.println();
@@ -423,98 +391,97 @@ public class Game {
         System.out.println("    [E]xit    ");
         System.out.println();
 
-        do{
-        errorMessage();
-        error = 0;
-        System.out.println("  Which plant do you want?");
+        try {
+            do{
+                printError();
+                error = "";
+                System.out.println("  Which plant do you want?");
 
-        choice = charInput(scanner);
 
-            switch(choice){
-                case 'T':
-                    if(farmer.coinCheck(5, true)){
-                        farmer.plant(farm.getPlot(x, y), new Crop("Turnip", "Root", day, 2, 1, 2, 0, 1, 1, 2, 5, 6, 5));
-                        choice = 'E';
-                    }
-                    else{
-                        error = 1;
-                    }
-                    break;
-                case 'C':
-                    if(farmer.coinCheck(10, true)){
-                        farmer.plant(farm.getPlot(x, y), new Crop("Carrot", "Root", day, 3, 1, 2, 0, 1, 1, 2, 10, 9, 7.5));
-                        choice = 'E';
-                    }
-                    else{
-                        error = 1;
-                    }
-                    break;
-                case 'P':
-                    if(farmer.coinCheck(20, true)){
-                        farmer.plant(farm.getPlot(x, y), new Crop("Potato", "Root", day, 5, 3, 4, 1, 2, 1, 10, 20, 3, 12.5));
-                        choice = 'E';
-                    }
-                    else{
-                        error = 1;
-                    }
-                    break;
-                case 'R':
-                    if(farmer.coinCheck(5, true)){
-                        farmer.plant(farm.getPlot(x, y), new Crop("Rose", "Flower", day, 1, 1, 2, 0, 1, 1, 1, 5, 5, 2.5));
-                        choice = 'E';
-                    }
-                    else{
-                        error = 1;
-                    }
-                    break;
-                case 'U':
-                    if(farmer.coinCheck(10, true)){
-                        farmer.plant(farm.getPlot(x, y), new Crop("Turnips", "Flower", day, 2, 2, 3, 0, 1, 1, 1, 10, 9, 5));
-                        choice = 'E';
-                    }
-                    else{
-                        error = 1;
-                    }
-                    break;
-                case 'S':
-                    if(farmer.coinCheck(20, true)){
-                        farmer.plant(farm.getPlot(x, y), new Crop("Sunflower", "Flower", day, 3, 2, 3, 1, 2, 1, 1, 20, 19, 7.5));
-                        choice = 'E';
-                    }
-                    else{
-                        error = 1;
-                    }
-                    break;
-                case 'M':
-                    if (farm.adjacentPlotCheck(x, y)){
-                        error = 8;
-                    }
-                    else if(!farmer.coinCheck(100, true)){
-                        error = 1;
-                    }
-                    else{
-                        farmer.plant(farm.getPlot(x, y), new Crop("Mango", "Tree", day, 10, 7, 7, 4, 4, 5, 15, 100, 8, 25));
-                        choice = 'E';
-                    }
-                    break;
-                case 'A':
-                    if (farm.adjacentPlotCheck(x, y)){
-                        error = 8;
-                    }
-                    else if(!farmer.coinCheck(200, true)){
-                        error = 1;
-                    }
-                    else{
-                        farmer.plant(farm.getPlot(x, y), new Crop("Apple", "Tree", day, 10, 7, 7, 5, 5, 10, 15, 200, 5, 25));
-                        choice = 'E';
-                    }
-                    break;
-                case 'E':
-                    break;
-                default:
-                    error = 2;
-                    break;
-            }
-        } while(choice != 'E');
+                choice = charInput(scanner);
+
+                switch(choice){
+                    case 'T':
+                        if(farmer.coinCheck(5, true)){
+                            farmer.plant(farm.getPlot(x, y), new Crop("Turnip", "Root", day, 2, 1, 2, 0, 1, 1, 2, 5, 6, 5));
+                            choice = 'E';
+                        }
+                        else throw new CannotAffordException();
+                        break;
+                    case 'C':
+                        if(farmer.coinCheck(10, true)){
+                            farmer.plant(farm.getPlot(x, y), new Crop("Carrot", "Root", day, 3, 1, 2, 0, 1, 1, 2, 10, 9, 7.5));
+                            choice = 'E';
+                        }
+                        else throw new CannotAffordException();
+                        break;
+                    case 'P':
+                        if(farmer.coinCheck(20, true)){
+                            farmer.plant(farm.getPlot(x, y), new Crop("Potato", "Root", day, 5, 3, 4, 1, 2, 1, 10, 20, 3, 12.5));
+                            choice = 'E';
+                        }
+                        else throw new CannotAffordException();
+                        break;
+                    case 'R':
+                        if(farmer.coinCheck(5, true)){
+                            farmer.plant(farm.getPlot(x, y), new Crop("Rose", "Flower", day, 1, 1, 2, 0, 1, 1, 1, 5, 5, 2.5));
+                            choice = 'E';
+                        }
+                        else throw new CannotAffordException();
+                        break;
+                    case 'U':
+                        if(farmer.coinCheck(10, true)){
+                            farmer.plant(farm.getPlot(x, y), new Crop("Turnips", "Flower", day, 2, 2, 3, 0, 1, 1, 1, 10, 9, 5));
+                            choice = 'E';
+                        }
+                        else throw new CannotAffordException();
+                        break;
+                    case 'S':
+                        if(farmer.coinCheck(20, true)){
+                            farmer.plant(farm.getPlot(x, y), new Crop("Sunflower", "Flower", day, 3, 2, 3, 1, 2, 1, 1, 20, 19, 7.5));
+                            choice = 'E';
+                        }
+                        else throw new CannotAffordException();
+                        break;
+                    case 'M':
+                        if (farm.adjacentPlotCheck(x, y)){
+                            throw new TreeAdjacencyException();
+                        }
+                        else if(!farmer.coinCheck(100, true)){
+                            throw new CannotAffordException();
+                        }
+                        else{
+                            farmer.plant(farm.getPlot(x, y), new Crop("Mango", "Tree", day, 10, 7, 7, 4, 4, 5, 15, 100, 8, 25));
+                            choice = 'E';
+                        }
+                        break;
+                    case 'A':
+                        if (farm.adjacentPlotCheck(x, y)){
+                            throw new TreeAdjacencyException();
+                        }
+                        else if(!farmer.coinCheck(200, true)){
+                            throw new CannotAffordException();
+                        }
+                        else{
+                            farmer.plant(farm.getPlot(x, y), new Crop("Apple", "Tree", day, 10, 7, 7, 5, 5, 10, 15, 200, 5, 25));
+                            choice = 'E';
+                        }
+                        break;
+                    case 'E':
+                        break;
+                    default:
+                        throw new InvalidInputException();
+                }
+
+            } while(choice != 'E');
+        } catch (ScannerException e) {
+            error = e.getMessage();
+        }
+    }
+    
+    private void printError() {
+        if (error != null && (!error.isEmpty() || !error.equals(""))) {
+            System.err.println("Error: " + error);
+        }
     }
 }

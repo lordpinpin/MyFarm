@@ -1,3 +1,5 @@
+import exceptions.*;
+
 /**
  * This represents the entire farm, which contains the various Plots that the Farmer will be acting on.
  */
@@ -79,9 +81,11 @@ public class Farm {
     public boolean plantFarmCheck() {
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
-                if (value.plantCheck() == 0) {
-                    return true;
-                }
+                try {
+                    if (value.plantCheck()) {
+                        return true;
+                    }
+                } catch (PlotHasRockException | PlotAlreadyOccupiedException | PlotNotPlowedException ignored) {}
             }
         }
         return false;
@@ -132,9 +136,11 @@ public class Farm {
     public boolean cropFarmCheck(int day){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
-                if (value.cropCheck() && !value.witherCheck(day) && value.harvestCheck(day) != 0) {
-                    return true;
-                }
+                try {
+                    if (value.cropCheck() && !value.witherCheck(day) && !value.harvestCheck(day)) {
+                        return true;
+                    }
+                } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}
             }
         }
         return false;
@@ -148,9 +154,11 @@ public class Farm {
     public boolean harvestFarmCheck(int day){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
-                if (value.harvestCheck(day) == 0) {
-                    return true;
-                }
+                try {
+                    if (value.harvestCheck(day)) {
+                        return true;
+                    }
+                } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}
             }
         }
         return false;
@@ -164,9 +172,11 @@ public class Farm {
     public void harvestUpdate(int day){
         for (int i = 0; i < plots.length; i++) {
             for (int j = 0; j < plots[i].length; j++) {
-                if (plots[i][j].harvestCheck(day) == 0){
-                    System.out.println("  A " + plots[i][j].getCrop().getName() + " can be harvested at (" + i + ", " + j + ").");
-                }
+                try {
+                    if (plots[i][j].harvestCheck(day)){
+                        System.out.println("  A " + plots[i][j].getCrop().getName() + " can be harvested at (" + i + ", " + j + ").");
+                    }
+                } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}
             }
         }
     }
