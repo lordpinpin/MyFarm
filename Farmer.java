@@ -239,6 +239,7 @@ public class Farmer {
                     type = "Registered Farmer";
                 }
                 else throw new CannotAffordException();
+                break;
 
             case "Registered Farmer":
                 if(objectCoins >= 300){
@@ -249,6 +250,7 @@ public class Farmer {
                     type = "Distinguished Farmer";
                 }
                 else throw new CannotAffordException();
+                break;
 
             case "Distinguished Farmer":
                 if(objectCoins >= 400){
@@ -260,6 +262,7 @@ public class Farmer {
                     type = "Legendary Farmer";
                 }
                 else throw new CannotAffordException();
+                break;
 
             default:
                 System.out.println("  Error in register().");
