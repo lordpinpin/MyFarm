@@ -1,31 +1,53 @@
 import exceptions.CannotAffordException;
 import exceptions.InvalidInputException;
 import exceptions.NoAvailablePlotsException;
-
+import exceptions.ScannerException;
+import exceptions.TreeAdjacencyException;
 import java.util.Scanner;
 
-/**
- * Driver for MyFarm (CCPROG MP).
- */
 public class Driver {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        char newGameChoice = 'N';
 
-        Game game;
-
+        // Outer loop for restarting the game
         do {
-            game = new Game();
+            // Create a new game instance
+            GameManager gameManager = new GameManager();
 
-            game.displayStart(scanner);
+            // Display the starting screen using the UIManager
+            UIManager.displayStartScreen(scanner);
 
-            do {
-                game.displayFarmInfo();
-                game.displayChoiceMenu();
+            // Main game loop
+            while (!gameManager.endCheck()) {
+                UIManager.displayFarmInfo(
+                        gameManager.getDay(),
+                        gameManager.getFarmer(),
+                        gameManager.getFarm()
+                );
+                UIManager.displayChoiceMenu(
+                        gameManager.getFarm(),
+                        gameManager.getFarmer(),
+                        gameManager.getDay()
+                );
+
                 try {
-                    game.choiceMenu(scanner);
-                } catch (NoAvailablePlotsException | CannotAffordException | InvalidInputException ignored) {}
-            } while (!game.endCheck());
-        } while (game.displayEndInfo(scanner));
+                    gameManager.choiceMenu(scanner);
+                } catch (NoAvailablePlotsException | CannotAffordException |
+                         InvalidInputException | TreeAdjacencyException e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+
+            // Display the end screen and ask if the player wants a new game
+            UIManager.displayEndScreen(gameManager.getFarm(), gameManager.getDay());
+            try {
+                newGameChoice = InputManager.getCharInput(scanner);
+            } catch (ScannerException e) {
+                System.err.println("Error: " + e.getMessage());
+                break;
+            }
+        } while (newGameChoice == 'N');  // 'N' means "new game"
 
         scanner.close();
     }
