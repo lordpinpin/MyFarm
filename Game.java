@@ -403,42 +403,42 @@ public class Game {
                 switch(choice){
                     case 'T':
                         if(farmer.coinCheck(5, true)){
-                            farmer.plant(farm.getPlot(x, y), new Crop("Turnip", "Root", day, 2, 1, 2, 0, 1, 1, 2, 5, 6, 5));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createTurnip(day));
                             choice = 'E';
                         }
                         else throw new CannotAffordException();
                         break;
                     case 'C':
                         if(farmer.coinCheck(10, true)){
-                            farmer.plant(farm.getPlot(x, y), new Crop("Carrot", "Root", day, 3, 1, 2, 0, 1, 1, 2, 10, 9, 7.5));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createCarrot(day));
                             choice = 'E';
                         }
                         else throw new CannotAffordException();
                         break;
                     case 'P':
                         if(farmer.coinCheck(20, true)){
-                            farmer.plant(farm.getPlot(x, y), new Crop("Potato", "Root", day, 5, 3, 4, 1, 2, 1, 10, 20, 3, 12.5));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createPotato(day));
                             choice = 'E';
                         }
                         else throw new CannotAffordException();
                         break;
                     case 'R':
                         if(farmer.coinCheck(5, true)){
-                            farmer.plant(farm.getPlot(x, y), new Crop("Rose", "Flower", day, 1, 1, 2, 0, 1, 1, 1, 5, 5, 2.5));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createRose(day));
                             choice = 'E';
                         }
                         else throw new CannotAffordException();
                         break;
                     case 'U':
                         if(farmer.coinCheck(10, true)){
-                            farmer.plant(farm.getPlot(x, y), new Crop("Turnips", "Flower", day, 2, 2, 3, 0, 1, 1, 1, 10, 9, 5));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createTurnips(day));
                             choice = 'E';
                         }
                         else throw new CannotAffordException();
                         break;
                     case 'S':
                         if(farmer.coinCheck(20, true)){
-                            farmer.plant(farm.getPlot(x, y), new Crop("Sunflower", "Flower", day, 3, 2, 3, 1, 2, 1, 1, 20, 19, 7.5));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createSunflower(day));
                             choice = 'E';
                         }
                         else throw new CannotAffordException();
@@ -451,7 +451,7 @@ public class Game {
                             throw new CannotAffordException();
                         }
                         else{
-                            farmer.plant(farm.getPlot(x, y), new Crop("Mango", "Tree", day, 10, 7, 7, 4, 4, 5, 15, 100, 8, 25));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createMango(day));
                             choice = 'E';
                         }
                         break;
@@ -463,7 +463,7 @@ public class Game {
                             throw new CannotAffordException();
                         }
                         else{
-                            farmer.plant(farm.getPlot(x, y), new Crop("Apple", "Tree", day, 10, 7, 7, 5, 5, 10, 15, 200, 5, 25));
+                            farmer.plant(farm.getPlot(x, y), CropFactory.createApple(day));
                             choice = 'E';
                         }
                         break;
