@@ -1,5 +1,7 @@
 import java.util.Objects;
 
+import exceptions.PlotUnoccupiedException;
+
 /**
  * <p>
  * This class represents the crops that will be planted and harvested from plots.
@@ -95,15 +97,17 @@ public class Crop {
 
     /**
      * Increments water amount of Crop by 1.
+     * @throws PlotUnoccupiedException 
      */
-    public void addWater(){
+    public void addWater() throws PlotUnoccupiedException{
         waterAmount += 1;
     }
 
     /**
      * Increments fertilizer amount of Crop by 1.
+     * @throws PlotUnoccupiedException 
      */
-    public void addFertilizer(){
+    public void addFertilizer() throws PlotUnoccupiedException{
         fertilizerAmount += 1;
     }
 
