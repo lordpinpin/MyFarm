@@ -137,7 +137,7 @@ public class Farm {
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
                 try {
-                    if (value.cropCheck() && !value.witherCheck(day) && !value.harvestCheck(day)) {
+                    if (!value.witherCheck(day) && !value.harvestCheck(day)) {
                         return true;
                     }
                 } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}

@@ -15,7 +15,7 @@ import exceptions.*;
  * removed by a pickaxe, and shovelling does not have an effect on it.
  */
 public class Plot {
-    private Crop crop = null;
+    private Crop crop = NullCrop.getInstance();
 
     private boolean plowed = false;
     private boolean rock = false;
@@ -67,7 +67,7 @@ public class Plot {
      */
     public void water(int day) throws PlotNotPlowedException, PlotUnoccupiedException, PlotAlreadyMaturedException, CropWitheredException {
         if (!plowed) throw new PlotNotPlowedException();
-        if (crop == null) throw new PlotUnoccupiedException();
+        // if (crop == null) throw new PlotUnoccupiedException();
         if (crop.getHarvestStatus(day)) throw new PlotAlreadyMaturedException();
         if(witherCheck(day)) throw new CropWitheredException();
 
@@ -81,7 +81,7 @@ public class Plot {
      */
     public void fertilize(int day) throws PlotNotPlowedException, PlotUnoccupiedException, PlotAlreadyMaturedException, CropWitheredException {
         if (!plowed) throw new PlotNotPlowedException();
-        if (crop == null) throw new PlotUnoccupiedException();
+        // if (crop == null) throw new PlotUnoccupiedException();
         if (crop.getHarvestStatus(day)) throw new PlotAlreadyMaturedException();
         if (witherCheck(day)) throw new CropWitheredException();
 
@@ -96,7 +96,7 @@ public class Plot {
      */
     public void plow(int day) throws CropWitheredException, PlotAlreadyOccupiedException, PlotAlreadyPlowedException {
         if (witherCheck(day)) throw new CropWitheredException();
-        if (crop != null) throw new PlotAlreadyOccupiedException();
+        if (!(crop instanceof NullCrop)) throw new PlotAlreadyOccupiedException();
         if (plowed) throw new PlotAlreadyPlowedException();
 
         plowed = true;
@@ -120,7 +120,8 @@ public class Plot {
      */
     public void resetPlot(){
         plowed = false;
-        crop = null;
+        // crop = null;
+        crop = NullCrop.getInstance();
         wither = false;
     }
     /**
@@ -151,7 +152,7 @@ public class Plot {
      * the crop cannot be harvested yet and 0 if there is no error.
      */
     public boolean harvestCheck(int day) throws PlotUnoccupiedException, CropWitheredException, CropNotMaturedException {
-        if (crop == null) throw new PlotUnoccupiedException();
+        if (crop instanceof NullCrop) throw new PlotUnoccupiedException();
         if (witherCheck(day)) throw new CropWitheredException();
         if (!crop.getHarvestStatus(day)) throw new CropNotMaturedException();
         return true;
@@ -166,21 +167,22 @@ public class Plot {
         if(wither){
             return true;
         }
-        else if (crop != null && crop.witherCheck(day)){
+        // else if (crop != null && crop.witherCheck(day)){
+        else if (crop.witherCheck(day)){
             wither = true;
             return true;
         }
         return false;
     }
 
-    /**
-     * Checks if the plot has a crop.
-     * @return true if the plot has crop, and false if not.
-     */
+    // /**
+    //  * Checks if the plot has a crop.
+    //  * @return true if the plot has crop, and false if not.
+    //  */
 
-    public boolean cropCheck(){
-        return crop != null;
-    }
+    // public boolean cropCheck(){
+    //     return crop != null;
+    // }
 
     /**
      * Checks if the plot can be planted on.
@@ -191,7 +193,7 @@ public class Plot {
 
     public boolean plantCheck() throws PlotHasRockException, PlotAlreadyOccupiedException, PlotNotPlowedException {
         if (rock) throw new PlotHasRockException();
-        if (crop != null) throw new PlotAlreadyOccupiedException();
+        if (!(crop instanceof NullCrop)) throw new PlotAlreadyOccupiedException();
         if (!plowed) throw new PlotNotPlowedException();
         return true;
     }
@@ -202,7 +204,8 @@ public class Plot {
      * @return true if the plot is empty, and false if not.
      */
     public boolean emptyCheck(){
-        return !(rock || crop != null);
+        return !(rock || !(crop instanceof NullCrop));
+        // return !rock;
     }
 
     /**
@@ -233,7 +236,8 @@ public class Plot {
         else if(rock){
             return 'X';
         }
-        else if(crop == null){
+        // else if(crop == null){
+        else if(crop instanceof NullCrop){
             return '#';
         }
         if(!witherCheck(day)) {
