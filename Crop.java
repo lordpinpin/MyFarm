@@ -118,7 +118,7 @@ public class Crop {
      * @param day the current day in the Game.
      * @return true if crop has withered, false if not.
      */
-    public boolean witherCheck(int day){
+    public boolean isWithered(int day){
         if (day - date == harvestTime){
             return waterMin > waterAmount || fertilizerMin > fertilizerAmount;
         }

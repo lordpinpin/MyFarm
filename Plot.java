@@ -69,7 +69,7 @@ public class Plot {
         if (!plowed) throw new PlotNotPlowedException();
         // if (crop == null) throw new PlotUnoccupiedException();
         if (crop.getHarvestStatus(day)) throw new PlotAlreadyMaturedException();
-        if(witherCheck(day)) throw new CropWitheredException();
+        if(hasWitheredCrop(day)) throw new CropWitheredException();
 
         crop.addWater();
     }
@@ -83,7 +83,7 @@ public class Plot {
         if (!plowed) throw new PlotNotPlowedException();
         // if (crop == null) throw new PlotUnoccupiedException();
         if (crop.getHarvestStatus(day)) throw new PlotAlreadyMaturedException();
-        if (witherCheck(day)) throw new CropWitheredException();
+        if (hasWitheredCrop(day)) throw new CropWitheredException();
 
         crop.addFertilizer();
     }
@@ -95,7 +95,7 @@ public class Plot {
      * 12 if the plot has already been plowed without any plant, and 0 if there is no error.
      */
     public void plow(int day) throws CropWitheredException, PlotAlreadyOccupiedException, PlotAlreadyPlowedException {
-        if (witherCheck(day)) throw new CropWitheredException();
+        if (hasWitheredCrop(day)) throw new CropWitheredException();
         if (!(crop instanceof NullCrop)) throw new PlotAlreadyOccupiedException();
         if (plowed) throw new PlotAlreadyPlowedException();
 
@@ -151,9 +151,9 @@ public class Plot {
      * @return the appropriate error code: 5 if there is no crop, 4 if the crop has withered, 13 if
      * the crop cannot be harvested yet and 0 if there is no error.
      */
-    public boolean harvestCheck(int day) throws PlotUnoccupiedException, CropWitheredException, CropNotMaturedException {
+    public boolean hasHarvestableCrop(int day) throws PlotUnoccupiedException, CropWitheredException, CropNotMaturedException {
         if (crop instanceof NullCrop) throw new PlotUnoccupiedException();
-        if (witherCheck(day)) throw new CropWitheredException();
+        if (hasWitheredCrop(day)) throw new CropWitheredException();
         if (!crop.getHarvestStatus(day)) throw new CropNotMaturedException();
         return true;
     }
@@ -163,12 +163,12 @@ public class Plot {
      * @param day the current day in the Game.
      * @return true if the plot has a wither crop, and false if not.
      */
-    public boolean witherCheck(int day){
+    public boolean hasWitheredCrop(int day){
         if(wither){
             return true;
         }
         // else if (crop != null && crop.witherCheck(day)){
-        else if (crop.witherCheck(day)){
+        else if (crop.isWithered(day)){
             wither = true;
             return true;
         }
@@ -191,7 +191,7 @@ public class Plot {
      * 6 if the plot is not plowed and 0 if there is no error.
      */
 
-    public boolean plantCheck() throws PlotHasRockException, PlotAlreadyOccupiedException, PlotNotPlowedException {
+    public boolean isPlantable() throws PlotHasRockException, PlotAlreadyOccupiedException, PlotNotPlowedException {
         if (rock) throw new PlotHasRockException();
         if (!(crop instanceof NullCrop)) throw new PlotAlreadyOccupiedException();
         if (!plowed) throw new PlotNotPlowedException();
@@ -203,7 +203,7 @@ public class Plot {
      * Checks if the plot is empty (no rocks or no crops)
      * @return true if the plot is empty, and false if not.
      */
-    public boolean emptyCheck(){
+    public boolean isEmpty(){
         return !(rock || !(crop instanceof NullCrop));
         // return !rock;
     }
@@ -240,7 +240,7 @@ public class Plot {
         else if(crop instanceof NullCrop){
             return '#';
         }
-        if(!witherCheck(day)) {
+        if(!hasWitheredCrop(day)) {
             status = switch (crop.getName()) {
                 case "Turnip" -> 't';
                 case "Carrot" -> 'c';

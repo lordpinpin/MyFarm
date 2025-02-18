@@ -27,7 +27,7 @@ public class NullCrop extends Crop {
     }
 
     @Override
-    public boolean witherCheck(int day) {
+    public boolean isWithered(int day) {
         return false;
     }
 

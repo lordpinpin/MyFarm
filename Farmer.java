@@ -183,7 +183,7 @@ public class Farmer {
      */
     public void harvest(Plot plot, int day){
         try {
-            plot.harvestCheck(day);
+            plot.hasHarvestableCrop(day);
         } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException e) {
             System.err.println("Error: " + e.getMessage());
         }

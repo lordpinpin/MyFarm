@@ -31,7 +31,7 @@ public class Farm {
      * @return true if it is a valid coordinate and false if not.
      */
     public boolean isValidPlot(int x, int y){
-        return x >= 0 && y >= 0 && x <= plots.length && y <= plots[x].length;
+        return x >= 0 && y >= 0 && x < plots.length && y < plots[x].length;
     }
 
     /**
@@ -48,7 +48,7 @@ public class Farm {
      * Checks if there is a single Plot in the entire farm that can be plowed.
      * @return true if it is a Plot to be plowed and false if not.
      */
-    public boolean plowedFarmCheck(){
+    public boolean hasPlowablePlot(){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
                 if (!value.getPlow()) {
@@ -63,7 +63,7 @@ public class Farm {
      * Checks if there is a rock on the farm.
      * @return true if there is a rock and false if not.
      */
-    public boolean rockFarmCheck(){
+    public boolean hasRock(){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
                 if (value.getRock()) {
@@ -78,11 +78,11 @@ public class Farm {
      * Checks if there is a plantable Plot on the farm.
      * @return true if there is a plantable Plot and false if not.
      */
-    public boolean plantFarmCheck() {
+    public boolean hasPlantablePlot() {
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
                 try {
-                    if (value.plantCheck()) {
+                    if (value.isPlantable()) {
                         return true;
                     }
                 } catch (PlotHasRockException | PlotAlreadyOccupiedException | PlotNotPlowedException ignored) {}
@@ -97,32 +97,32 @@ public class Farm {
      * @param y the column to be checked.
      * @return true if all adjacent Plots are empty and false if not.
      */
-    public boolean adjacentPlotCheck(int x, int y){ // Does not apply in prototype as only one plot exists at the moment.
-        if(x - 1 >= 0 && y - 1 >= 0 && plots[x - 1][y - 1].emptyCheck()) { // Top left
+    public boolean hasEmptyAdjacentPlots(int x, int y){ // Does not apply in prototype as only one plot exists at the moment.
+        if(x - 1 >= 0 && y - 1 >= 0 && plots[x - 1][y - 1].isEmpty()) { // Top left
             return false;
         }
-        if(y - 1 >= 0 && plots[x][y - 1].emptyCheck()){ // Top middle
+        if(y - 1 >= 0 && plots[x][y - 1].isEmpty()){ // Top middle
             return false;
         }
-        if(y - 1 >= 0 && x + 1 < plots[y - 1].length && plots[x + 1][y - 1].emptyCheck()){ // Top right
+        if(y - 1 >= 0 && x + 1 < plots[y - 1].length && plots[x + 1][y - 1].isEmpty()){ // Top right
             return false;
         }
-        if(x - 1 >= 0 && plots[x - 1][y].emptyCheck()){
+        if(x - 1 >= 0 && plots[x - 1][y].isEmpty()){
             return false;
         }
-        if(plots[x][y].emptyCheck()){
+        if(plots[x][y].isEmpty()){
             return false;
         }
-        if(x + 1 < plots[y].length && plots[x + 1][y].emptyCheck()){
+        if(x + 1 < plots[y].length && plots[x + 1][y].isEmpty()){
             return false;
         }
-        if(x - 1 >= 0 && y + 1 < plots.length && plots[x - 1][y + 1].emptyCheck()){
+        if(x - 1 >= 0 && y + 1 < plots.length && plots[x - 1][y + 1].isEmpty()){
             return false;
         }
-        if(y + 1 < plots.length && plots[x][y + 1].emptyCheck()){
+        if(y + 1 < plots.length && plots[x][y + 1].isEmpty()){
             return false;
         }
-        if(y + 1 < plots.length && x + 1 < plots[y + 1].length && plots[x + 1][y + 1].emptyCheck()){
+        if(y + 1 < plots.length && x + 1 < plots[y + 1].length && plots[x + 1][y + 1].isEmpty()){
             return true;
         }
         return true;
@@ -133,11 +133,11 @@ public class Farm {
      * @param day the current day in the Game.
      * @return true if there is a Crop that is neither withered nor mature and false if not.
      */
-    public boolean cropFarmCheck(int day){
+    public boolean hasUnmaturedCrop(int day){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
                 try {
-                    if (!value.witherCheck(day) && !value.harvestCheck(day)) {
+                    if (!value.hasWitheredCrop(day) && !value.hasHarvestableCrop(day)) {
                         return true;
                     }
                 } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}
@@ -151,11 +151,11 @@ public class Farm {
      * @param day the current day in the Game.
      * @return true if there is a Plot with a Crop that can be harvested and false if not.
      */
-    public boolean harvestFarmCheck(int day){
+    public boolean hasHarvestableCrop(int day){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
                 try {
-                    if (value.harvestCheck(day)) {
+                    if (value.hasHarvestableCrop(day)) {
                         return true;
                     }
                 } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}
@@ -169,11 +169,11 @@ public class Farm {
      * @param day the current day in the Game.
      */
 
-    public void harvestUpdate(int day){
+    public void displayHarvestableCrop(int day){
         for (int i = 0; i < plots.length; i++) {
             for (int j = 0; j < plots[i].length; j++) {
                 try {
-                    if (plots[i][j].harvestCheck(day)){
+                    if (plots[i][j].hasHarvestableCrop(day)){
                         System.out.println("  A " + plots[i][j].getCrop().getName() + " can be harvested at (" + i + ", " + j + ").");
                     }
                 } catch (PlotUnoccupiedException | CropWitheredException | CropNotMaturedException ignored) {}
@@ -186,10 +186,10 @@ public class Farm {
      * @param day the current day in the Game.
      * @return true if all Plots have withered Crops and false if not.
      */
-    public boolean witherFarmCheck(int day){
+    public boolean isFullOfWitheredCrops(int day){
         for (Plot[] plot : plots) {
             for (Plot value : plot) {
-                if (!value.witherCheck(day)) {
+                if (!value.hasWitheredCrop(day)) {
                     return false;
                 }
             }
@@ -202,10 +202,10 @@ public class Farm {
      * @param day the current day in the Game.
      */
 
-    public void witherUpdate(int day){
-        for (Plot[] plot : plots) {
-            for (Plot value : plot) {
-                value.witherCheck(day);
+    public void hasWitheredCrops(int day){
+        for (Plot[] plotRow : plots) {
+            for (Plot plot : plotRow) {
+                plot.hasWitheredCrop(day);
             }
         }
     }
